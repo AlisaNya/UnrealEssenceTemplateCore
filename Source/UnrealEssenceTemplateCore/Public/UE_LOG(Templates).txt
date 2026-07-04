@@ -1,0 +1,134 @@
+﻿// Copyright UnrealEssence. All Rights Reserved.
+
+UE_LOG( LogCategory, Verbosity, TEXT("Message Text"));
+
+
+Log (просто логи)
+
+UE_LOG( LogTemp, Log, TEXT("No Support Type"));     // Временные логи при отладке. Самый простой вариант для быстрой проверки
+UE_LOG( LogNet, Log, TEXT("No Support Type"));      // Сетевое взаимодействие, подключения, пакеты
+UE_LOG( LogRep, Log, TEXT("No Support Type"));      // Репликация свойств
+UE_LOG( LogDemo, Log, TEXT("No Support Type"));     // Демо-записи (Replays)
+UE_LOG( LogLoad, Log, TEXT("No Support Type"));     // Загрузка классов, пакетов, ассетов
+UE_LOG( LogStats, Log, TEXT("No Support Type"));    // Статистика и профайлинг
+
+
+
+
+Warning (жёлтые предупреждения)
+
+UE_LOG( LogTemp, Warning, TEXT("No Support Type"));     // Временные логи при отладке. Самый простой вариант для быстрой проверки
+UE_LOG( LogNet, Warning, TEXT("No Support Type"));      // Сетевое взаимодействие, подключения, пакеты
+UE_LOG( LogRep, Warning, TEXT("No Support Type"));      // Репликация свойств
+UE_LOG( LogDemo, Warning, TEXT("No Support Type"));     // Демо-записи (Replays)
+UE_LOG( LogLoad, Warning, TEXT("No Support Type"));     // Загрузка классов, пакетов, ассетов
+UE_LOG( LogStats, Warning, TEXT("No Support Type"));    // Статистика и профайлинг
+
+
+
+
+Error (красные ошибки)
+
+UE_LOG( LogTemp, Error, TEXT("No Support Type"));     // Временные логи при отладке. Самый простой вариант для быстрой проверки
+UE_LOG( LogNet, Error, TEXT("No Support Type"));      // Сетевое взаимодействие, подключения, пакеты
+UE_LOG( LogRep, Error, TEXT("No Support Type"));      // Репликация свойств
+UE_LOG( LogDemo, Error, TEXT("No Support Type"));     // Демо-записи (Replays)
+UE_LOG( LogLoad, Error, TEXT("No Support Type"));     // Загрузка классов, пакетов, ассетов
+UE_LOG( LogStats, Error, TEXT("No Support Type"));    // Статистика и профайлинг
+
+
+или своя кастомная категория логов
+DECLARE_LOG_CATEGORY_EXTERN(ИмяКатегории, УровеньПоУмолчанию, Компиляция)
+
+ИмяКатегории - идентификатор (обычно с префиксом Log, например LogMyPlugin)
+
+УровеньПоУмолчанию - какой уровень логов будет выводиться, если не задан через консоль:
+    Log - выводятся все сообщения
+    Warning - выводятся Warning и Error (не выводятся Log)
+    Error - выводятся только Error
+
+Компиляция - флаги оптимизации (чаще всего All):
+    All - все проверки включены
+    NoLogging - логирование вырезается из сборки
+
+примеры;
+
+В заголовочном файле (например, MyActor.h):
+    DECLARE_LOG_CATEGORY_EXTERN(MyCustomCategory, Log, All);
+
+В cpp-файле (MyActor.cpp):
+    DEFINE_LOG_CATEGORY(MyCustomCategory);
+
+или так
+
+    UE_LOG(LogMyPlayer, Verbose, TEXT("Детальное сообщение"));
+    UE_LOG(LogMyPlayer, VeryVerbose, TEXT("Максимально детально"));
+    UE_LOG(LogMyNetwork, Error, TEXT("Потеря соединения")); 
+ 
+Если категория нужна только внутри одного .cpp файла:   
+    // Внутри .cpp файла
+    DEFINE_LOG_CATEGORY_STATIC(LogMyLocal, Log, All);
+    
+Уровни детализации (Verbosity)
+    Уровень	Макрос	    Цвет в Output Log
+    0	Fatal	        Красный (вызывает checkf)
+    1	Error	        Красный
+    2	Warning	        Желтый
+    3	Display	        Белый
+    4	Log	            Серый
+    5	Verbose	        Серый (отображается только если включен)
+    6	VeryVerbose	    Серый (самый подробный)
+    
+// Для конкретного класса
+    DECLARE_LOG_CATEGORY_EXTERN(LogMyActor, Log, All);
+
+// Для целого модуля
+    DECLARE_LOG_CATEGORY_EXTERN(LogMyPlugin, Log, All);
+
+// Для конкретной системы
+    DECLARE_LOG_CATEGORY_EXTERN(LogCombatSystem, Log, All);
+    DECLARE_LOG_CATEGORY_EXTERN(LogInventorySystem, Warning, All);
+
+Когда использовать встроенные категории:
+    LogTemp - быстрые отладочные выводы
+    LogLoad, LogNet - системные сообщения
+    
+Когда создавать свою:
+    Плагин или модуль для переиспользования
+    Нужна возможность фильтрации в консоли
+    Много логов в одном классе
+    Требуется разный уровень детализации для разных систем
+    
+варианты требующие особого внимания (крашнут движок насильственно завершая программу)
+
+// 1. Классический check - ассерт с условием
+check(Pointer != nullptr);  // Если Pointer == nullptr - краш
+
+// 2. check с форматированием
+checkf(Pointer != nullptr, TEXT("Указатель null в функции %s"), __FUNCTION__);
+
+// 3. UE_LOG с Fatal - по сути, безусловный краш
+UE_LOG(LogTemp, Fatal, TEXT("Все плохо - вылетаем"));
+// Это аналогично:
+checkf(false, TEXT("Все плохо - вылетаем"));
+
+
+
+// C++ UE
+    UE_LOG(LogTemp, Fatal, TEXT("Error"));
+// Эквивалентно в C#:
+    throw new Exception("Error");
+
+// Эквивалентно в C++:
+    std::terminate();
+
+// Эквивалентно в UE без лога:
+    check(false);
+
+Когда использовать Fatal
+    Только для:
+
+    Загрузка критических данных (не загрузился основной ассет)
+    Гарантированно плохое состояние (найден коррупция памяти)
+    Функции не должны быть вызваны никогда (например, Unimplemented())
+    Для обычных логов используйте Error или Warning - они не крашат программу.
