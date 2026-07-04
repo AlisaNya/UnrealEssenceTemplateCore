@@ -50,3 +50,26 @@
   * @note 
   * @see 
   */
+  
+  // чистый шаблон для комментариев 
+   
+  /** 
+   * @struct 
+   * @brief 
+   * 
+   * @details 
+   * - 
+   * - 
+   * 
+   * @version 
+   * @todo : 
+   * @warning 
+   * 
+   * @param 
+   * @tparam 
+   * @example 
+   * @return 
+   * 
+   * @note 
+   * @see 
+   */

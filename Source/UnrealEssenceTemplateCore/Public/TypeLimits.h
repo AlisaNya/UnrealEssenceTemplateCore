@@ -4,55 +4,80 @@
 
 #include "CoreTypes.h"
 
-namespace EDateTime // для FDateTime аналог ETimespan у FTimespan для удобства и использования в constexpr функциях (стандартный вариант возвращает саму FDateTime и из-за ее конструктора использовать ее там не выйдет)
+/**
+ * @file TypeLimits.h
+ * @brief Расширенная версия TNumericLimits с поддержкой временных типов (FTimespan, FDateTime).
+ *
+ * @details Предоставляет единый интерфейс TTypeLimits<T> для получения Min/Max/Lowest значений:
+ *          - Для арифметических типов — делегирует к стандартному TNumericLimits
+ *          - Для FTimespan / FDateTime — возвращает корректные границы в тиках и в исходном типе
+ *          - Для const/volatile — автоматически наследуется от базовой специализации
+ *
+ * @note Позволяет работать с числовыми и временными типами бесшовно через один интерфейс.
+ * @version 1.0
+ */
+
+/**
+ * @namespace EDateTime
+ * @brief Аналог ETimespan для FDateTime — предоставляет константы тиков для constexpr-контекста.
+ *
+ * @details Стандартный FDateTime не имеет аналога ETimespan, и его конструктор нельзя использовать
+ *          в constexpr. Данный namespace решает эту проблему, предоставляя сырые значения тиков.
+ *          
+ * @note Стандартный вариант возвращает саму FDateTime и из-за ее конструктора использовать ее в constexpr не выйдет что ограничивает проверки только рантаймом (мы обходим это ограничение!!!)
+*/
+namespace EDateTime
 {
-	/** The maximum number of ticks that can be represented in FTimespan. */
+	/** @brief Максимальное количество тиков FDateTime (December 31, 9999, 23:59:59.9999999). */
 	inline constexpr int64 MaxTicks = 3652059 * 864000000000 - 1; // (MaxDays * TicksPerDay - 1) // (1 tick before midnight)
 
-	/** The minimum number of ticks that can be represented in FTimespan. */
+	/** @brief Минимальное количество тиков FDateTime (January 1, 0001, 00:00:00.0). */
 	inline constexpr int64 MinTicks = 0;
 }
 
-/* Type traits
-*****************************************************************************/
+// ============================================================================
+// Базовый шаблон TTypeLimits
+// ============================================================================
 
 	/**
-	 * Helper class to map an all type to its limits (Extended TNumericLimits + Time Type Limits)
-	 */
+	 * @struct TTypeLimits
+	 * @brief Универсальный интерфейс получения границ значений для любого типа.
+	 * @details Расширяет TNumericLimits поддержкой временных типов.
+	 * @tparam InType Тип, для которого запрашиваются границы
+	*/
 	template <typename InType>
 	struct TTypeLimits;
 
 	
-	/**
-	 * limits for const types
-	 */
+	/** @brief Специализация для const-типов — наследует базовую. */
 	template <typename InType>
 	struct TTypeLimits<const InType> 
 		: public TTypeLimits<InType>
 	{ };
 
 
-	/**
-	 * limits for volatile types
-	 */
+	/** @brief Специализация для volatile-типов — наследует базовую. */
 	template <typename InType>
 	struct TTypeLimits<volatile InType> 
 		: public TTypeLimits<InType>
 	{ };
 
 
-	/**
-	 * limits for const volatile types
-	 */
+	/** @brief Специализация для const volatile-типов — наследует базовую. */
 	template <typename InType>
 	struct TTypeLimits<const volatile InType> 
 		: public TTypeLimits<InType>
 	{ };
 
 
-/* Time Types (Works return Ticks for Type)
-*****************************************************************************/
+// ============================================================================
+// Специализация для FTimespan
+// ============================================================================
 
+	/**
+	 * @brief Специализация TTypeLimits для FTimespan.
+	 * @details Предоставляет границы как в тиках (int64), так и в виде FTimespan.
+	 */
 	template<>
 	struct TTypeLimits<FTimespan>
 	{
@@ -60,6 +85,7 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		typedef FTimespan InType;
 		
 		/**
+		 * @brief Минимальное значение в тиках (~ -29,234 года).
 		 * Returns the minimum timespan value (Ticks).
 		 *
 		 * The minimum timespan value is -10675199 days, 02:48:05.4775808 times
@@ -74,6 +100,7 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		}
 
 		/**
+		 * @brief Максимальное значение в тиках (~ +29,234 года).
 		 * Returns the maximum timespan value (Ticks).
 		 *
 		 * The maximum timespan value is 10675199 days, 02:48:05.4775807 times
@@ -88,6 +115,7 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		}
 
 		/**
+		 * @brief Наименьшее значение в тиках (алиас MinTicks для FTimespan).
 		 * Returns the minimum timespan value (Ticks).
 		 *
 		 * The minimum timespan value is -10675199 days, 02:48:05.4775808 times
@@ -102,6 +130,7 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		}
 		
 		/**
+		 * @brief Минимальное значение в виде FTimespan.
 		 * Returns the minimum timespan value
 		 *
 		 * The minimum timespan value is -10675199 days, 02:48:05.4775808 times
@@ -116,6 +145,7 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		}
 
 		/**
+		 * @brief Максимальное значение в виде FTimespan.
 		 * Returns the maximum timespan value
 		 *
 		 * The maximum timespan value is 10675199 days, 02:48:05.4775807 times
@@ -130,6 +160,7 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		}
 
 		/**
+		 * @brief Наименьшее значение в виде FTimespan (алиас Min).
 		 * Returns the minimum timespan value
 		 *
 		 * The minimum timespan value is -10675199 days, 02:48:05.4775808 times
@@ -144,6 +175,14 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		}
 	};
 	
+// ============================================================================
+// Специализация для FDateTime
+// ============================================================================
+
+	/**
+	 * @brief Специализация TTypeLimits для FDateTime.
+	 * @details Предоставляет границы как в тиках (int64), так и в виде FDateTime.
+	 */
 	template<>
 	struct TTypeLimits<FDateTime>
 	{
@@ -151,6 +190,7 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		typedef FDateTime InType;
 		
 		/**
+		 * @brief Минимальное значение в тиках (January 1, 0001, 00:00:00.0).
 		 * Returns the minimum date value (Ticks).
 		 *
 		 * The minimum date value is January 1, 0001, 00:00:00.0.
@@ -163,6 +203,7 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		}
 
 		/**
+		 * @brief Максимальное значение в тиках (December 31, 9999, 23:59:59.9999999).
 		 * Returns the maximum date value (Ticks).
 		 *
 		 * The maximum date value is December 31, 9999, 23:59:59.9999999.
@@ -178,6 +219,7 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		}
 
 		/**
+		 * @brief Наименьшее значение в тиках (алиас MinTicks).
 		 * Returns the minimum date value (Ticks).
 		 *
 		 * The minimum date value is January 1, 0001, 00:00:00.0.
@@ -190,6 +232,7 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		}
 		
 		/**
+		 * @brief Минимальное значение в виде FDateTime.
 		 * Returns the minimum date value
 		 *
 		 * The minimum date value is January 1, 0001, 00:00:00.0.
@@ -202,6 +245,7 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		}
 
 		/**
+		 * @brief Максимальное значение в виде FDateTime.
 		 * Returns the maximum date value
 		 *
 		 * The maximum date value is December 31, 9999, 23:59:59.9999999.
@@ -217,6 +261,7 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		}
 
 		/**
+		 * @brief Наименьшее значение в виде FDateTime (алиас Min).
 		 * Returns the minimum date value
 		 *
 		 * The minimum date value is January 1, 0001, 00:00:00.0.
@@ -229,40 +274,52 @@ namespace EDateTime // для FDateTime аналог ETimespan у FTimespan дл
 		}
 	};
 
-/* NumericType (use TNumericLimits)
-*****************************************************************************/
+// ============================================================================
+// Специализация для арифметических типов (через TNumericLimits)
+// ============================================================================
 
+/**
+ * @brief Специализация TTypeLimits для всех арифметических типов.
+ * @details Делегирует к TNumericLimits. Дополнительно предоставляет *Ticks-методы
+ *          для единообразного интерфейса с временными типами (возвращают то же, что и Min/Max/Lowest).
+ */
 template<typename InType>
 requires (std::is_arithmetic_v<InType>)
 struct TTypeLimits<InType>
 {
+	/** @brief Минимальное значение типа. */
 	[[nodiscard]] static constexpr InType Min()
 	{
 		return TNumericLimits<InType>::Min();
 	}
 
+	/** @brief Максимальное значение типа. */
 	[[nodiscard]] static constexpr InType Max()
 	{
 		return TNumericLimits<InType>::Max();
 	}
 
+	/** @brief Наименьшее значение типа (для знаковых = Min, для беззнаковых = Min). */
 	[[nodiscard]] static constexpr InType Lowest()
 	{
 		return TNumericLimits<InType>::Lowest();
 	}
 	
-	// перегрузки для поддержки единообразной обработки временных и арифметических типов как int64 тики и значения (возвращая запрашиваемое значение для типа не в исходном типе, а в тиках ), но обычной обработки остальных типов
-	
+	/** @brief Алиас Min() для единообразия с временными типами. */
 	[[nodiscard]] static constexpr InType MinTicks()
 	{
 		return Min();
 	}
 	
+	/** @brief Алиас Max() для единообразия с временными типами. */
 	[[nodiscard]] static constexpr InType MaxTicks()
 	{
 		return Max();
 	}
 
+	/** @brief Алиас Lowest() для единообразия с временными типами. 
+	 * 
+	 */
 	[[nodiscard]] static constexpr InType LowestTicks()
 	{
 		return Lowest();
