@@ -70,9 +70,9 @@ WARNING("Warning message");
 // Упрощённый лог с форматированием
 LOGF("Health: %d, Mana: %d", 100, 50);
 
-// Уникальная категория
-ULOG(MyUniqueCategory, "Message in unique category");
-ULOGF(MyUniqueCategory, "Formatted: %d", 42);
+// Уникальная категория (затем может использоваться другими вариантами логирования в пределах файла, повторно вызвать таким методом нельзя - каждый вызов = новая уникальная категория и сразу сообщение в ней!!!)
+ULOG(MyOneUniqueCategory, "Message in unique category");
+ULOGF(MyTwoUniqueCategory, "Formatted: %d", 42);
 ```
 
 ---
